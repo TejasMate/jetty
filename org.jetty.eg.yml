@@ -1,0 +1,43 @@
+id: org.jetty.eg
+runtime: org.freedesktop.Platform
+runtime-version: "22.08"
+sdk: org.freedesktop.Sdk
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.openjdk11
+command: /app/bin/run.sh
+finish-args:
+  - --filesystem=host
+  - --share=network
+  - --share=ipc
+  - --socket=x11
+  - --socket=wayland
+  - --socket=pulseaudio
+  - --device=dri
+  - --env=PATH=/app/jre/bin:/usr/bin:/app/bin
+  - --env=JAVA_HOME=/app/jre
+  - --env=JAVA=/app/jre/bin/java
+  #- --env=JETTY_HOME=/app/jetty
+modules:
+  - name: openjdk
+    buildsystem: simple
+    build-commands:
+      - /usr/lib/sdk/openjdk11/install.sh
+      - /usr/lib/sdk/openjdk11/enable.sh
+  - name: jetty
+    buildsystem: simple
+    sources:
+      - type: file
+        path: jetty.zip
+      - type: script
+        dest-filename: run.sh
+        commands:
+          - java -jar ${JETTY_HOME}/start.jar --module=jmx jetty.http.port=8080 STOP.KEY=xwiki STOP.PORT=8080
+          - java -jar ${JETTY_HOME}/start.jar
+    build-commands:
+      - mkdir -p /app/bin
+      - unzip -q jetty.zip -d /app
+      - install -Dm644 run.sh /app/bin/
+      - chmod +x /app/bin/run.sh
+      - chmod +x /app/jre/bin
+      - chmod +x /app/bin
+      - chmod -R 777 /app/jetty
